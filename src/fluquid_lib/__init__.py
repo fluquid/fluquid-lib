@@ -4,6 +4,8 @@ __author__ = 'Johannes Ahlmann'
 __email__ = 'johannes@fluquid.com'
 __version__ = '0.1.0'
 
+from itertools import islice, chain
+
 '''
 utility functions for python development.
 
@@ -47,3 +49,18 @@ utility functions for python development.
     * common ancestor
 '''
 
+
+# source: https://stackoverflow.com/a/1915307
+def split_every(n, iterable):
+    i = iter(iterable)
+    piece = list(islice(i, n))
+    while piece:
+        yield piece
+        piece = list(islice(i, n))
+
+
+# source: https://stackoverflow.com/a/24527424
+def chunks(iterable, size=10):
+    iterator = iter(iterable)
+    for first in iterator:
+        yield chain([first], islice(iterator, size - 1))

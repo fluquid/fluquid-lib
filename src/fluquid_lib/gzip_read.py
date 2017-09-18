@@ -15,13 +15,13 @@ timings on decent sized machine:
 Comparison is slightly skewed, because "gzip_rt" produces unicode
     whereas other solutions may produce byte strings
 """
-import os
 import io
 import mmap
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 import gzip
 import logging
+import atexit
 
 
 @contextmanager
@@ -37,10 +37,16 @@ def gzip_mmap(fname):
 
 
 @contextmanager
-def pigz(fname):
-    """ requires `pigz` to be installed. """
+def pigz(fname, universal_newlines=False, *args, **kwargs):
+    """ requires `pigz` to be installed.
+
+    :param universal_newlines: should really be called text_mode
+        (https://docs.python.org/3/glossary.html#term-universal-newlines)
+    """
     process = Popen(['pigz', '--decompress', '--stdout', fname],
-                    stdout=PIPE, stderr=PIPE)
+                    universal_newlines=universal_newlines,
+                    stdout=PIPE, stderr=PIPE, *args, **kwargs)
+    atexit.register(process.terminate)
     yield process.stdout
     exitcode = process.wait()
     if exitcode:
@@ -48,8 +54,10 @@ def pigz(fname):
 
 
 @contextmanager
-def zcat(fname):
-    process = Popen(['zcat', fname], stdout=PIPE, stderr=PIPE)
+def zcat(fname, *args, **kwargs):
+    process = Popen(['zcat', fname],
+                    stdout=PIPE, stderr=PIPE, *args, **kwargs)
+    atexit.register(process.terminate)
     yield process.stdout
     exitcode = process.wait()
     if exitcode:
